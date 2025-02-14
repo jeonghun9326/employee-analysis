@@ -127,6 +127,24 @@ if uploaded_files:
             if "Remark" in df.columns:
                 df.loc[df["Remark"].astype(str).str.startswith("Resigned and last working"), "퇴사일"] = previous_month_last_day
 
+            # 📌 퇴사자 목록 출력
+            if "퇴사일" in df.columns and "부서명" in df.columns and "성명" in df.columns and "직급명" in df.columns:
+                resigned_df = df[df["퇴사일"] == previous_month][["부서명", "성명", "직급명"]]
+                st.subheader("📌 전월 퇴사자 목록")
+                if not resigned_df.empty:
+                    st.table(resigned_df)
+                else:
+                    st.write("❌ 전월 퇴사자가 없습니다.")
+
+            # 📌 입사자 목록 출력
+            if "입사일" in df.columns and "부서명" in df.columns and "성명" in df.columns and "직급명" in df.columns:
+                new_hires_df = df[df["입사일"] == previous_month][["부서명", "성명", "직급명"]]
+                st.subheader("📌 전월 입사자 목록")
+                if not new_hires_df.empty:
+                    st.table(new_hires_df)
+                else:
+                    st.write("❌ 전월 입사자가 없습니다.")
+
             # 📌 "사원구분명" 컬럼 자동 생성
             if "사원구분명" not in df.columns:
                 df["사원구분명"] = None
