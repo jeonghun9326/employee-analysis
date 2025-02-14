@@ -23,10 +23,12 @@ sheet_order = [
     "이탈리아오토모빌리",
     "브리타니아오토",
     "디티네트웍스",
+    "DT네트웍스"
     "도이치파이낸셜",
     "BAMC",
     "차란차",
     "디티이노베이션",
+    "DT이노베이션,
     "도이치오토월드",
     "DAFS",
     "사직오토랜드"
@@ -112,6 +114,8 @@ if uploaded_files:
                 df = df.loc[df["성명"] != "장준호"]
             if sheet_name == "DT네트웍스" and "성명" in df.columns:
                 df = df.loc[df["성명"] != "권혁민"]
+            if sheet_name == "디티네트웍스" and "성명" in df.columns:
+                df = df.loc[df["성명"] != "권혁민"]                
             if sheet_name == "BAMC" and "English Name" in df.columns:
                 df = df.loc[df["English Name"] != "YOON JONG LYOL"]
 
