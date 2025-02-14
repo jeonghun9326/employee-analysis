@@ -63,15 +63,15 @@ if uploaded_file:
 
             # 📌 결과 출력
             # 📊 "사원구분명"별 분석 결과 출력
-            st.write("📌 4. **인원 수:**")
+            st.write("📌 1. **인원 수:**")
             for emp_type in employee_types:
                 st.write(f"  - {emp_type}: {active_or_resigned_this_month_by_type.get(emp_type, 0)}명")
 
-            st.write("📌 5. **전월 입사자 수:**")
+            st.write("📌 2. **전월 입사자 수:**")
             for emp_type in employee_types:
                 st.write(f"  - {emp_type}: {new_hires_by_type.get(emp_type, 0)}명")
 
-            st.write("📌 6. **전월 퇴사자 수:**")
+            st.write("📌 3. **전월 퇴사자 수:**")
             for emp_type in employee_types:
                 st.write(f"  - {emp_type}: {resigned_by_type_prev_month.get(emp_type, 0)}명")
 
