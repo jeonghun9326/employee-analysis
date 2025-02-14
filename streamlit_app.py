@@ -142,10 +142,18 @@ if uploaded_files:
             active_or_resigned_this_month_by_type = df[df["퇴사일"].isna() | (df["퇴사일"] == current_month)]["사원구분명"].value_counts()
             resigned_by_type_prev_month = df[df["퇴사일"] == previous_month]["사원구분명"].value_counts()
 
-            st.write(f"📌 전월({previous_month}) 입사자 수: {new_hires_prev_month}")
-            st.write(f"📌 전월({previous_month}) 퇴사자 수: {resigned_prev_month}")
+            # 📌 결과 출력
+            st.write("📌 1. **전월 입사자 수:**")
             for emp_type in employee_types:
                 st.write(f"  - {emp_type}: {new_hires_by_type.get(emp_type, 0)}명")
+
+            st.write("📌 2. **전월 퇴사자 수:**")
+            for emp_type in employee_types:
+                st.write(f"  - {emp_type}: {resigned_by_type_prev_month.get(emp_type, 0)}명")
+
+            st.write("📌 3. **인원 수:**")
+            for emp_type in employee_types:
+                st.write(f"  - {emp_type}: {active_or_resigned_this_month_by_type.get(emp_type, 0)}명")
 
         st.download_button(label="📥 병합된 엑셀 다운로드", data=open(merged_excel_path, "rb").read(), file_name="merged_excel.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
