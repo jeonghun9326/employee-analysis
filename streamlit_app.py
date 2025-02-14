@@ -68,18 +68,18 @@ if uploaded_zip:
                     file_path = os.path.join(folder_path, file)
                     try:
                         wb = load_workbook(file_path, data_only=True)
-                        visible_sheets = [sheet for sheet in wb.sheetnames if wb[sheet].sheet_state == "visible"]
+                        sheet_names = wb.sheetnames  # 모든 시트 포함 (숨겨진 시트 포함)
 
-                        if not visible_sheets:
-                            print(f"❌ 파일 {file} 에 보이는 시트가 없어 건너뜁니다.")
+                        if not sheet_names:
+                            st.warning(f"⚠️ 파일 `{file}` 에 사용 가능한 시트가 없어 건너뜁니다.")
                             continue
 
-                        for sheet_name in visible_sheets:
+                        for sheet_name in sheet_names:
                             ws = wb[sheet_name]
                             data = [[cell.value for cell in row] for row in ws.iter_rows()]
                             
                             if not data or all(all(cell is None for cell in row) for row in data):
-                                print(f"⚠️ 파일 {file} 의 시트 '{sheet_name}' 가 비어 있어 건너뜁니다.")
+                                st.warning(f"⚠️ 파일 `{file}` 의 시트 `{sheet_name}` 가 비어 있어 건너뜁니다.")
                                 continue
 
                             header_row_index = None
@@ -98,7 +98,7 @@ if uploaded_zip:
                             df.to_excel(writer, sheet_name=sheet_name_trimmed, index=False)
 
                     except Exception as e:
-                        print(f"🚨 파일 {file} 처리 중 오류 발생: {e}")
+                        st.error(f"🚨 파일 `{file}` 처리 중 오류 발생: {e}")
 
         merge_excel_files(temp_dir, merged_excel_path)
         st.success("✅ 엑셀 파일 병합 완료!")
@@ -145,11 +145,13 @@ if uploaded_zip:
             st.write(f"📌 전월({previous_month}) 입사자 수: {df[df['입사일'] == previous_month].shape[0]}")
             st.write(f"📌 전월({previous_month}) 퇴사자 수: {df[df['퇴사일'] == previous_month].shape[0]}")
 
-        # 📌 병합된 엑셀 다운로드 제공
         st.download_button(label="📥 병합된 엑셀 다운로드", data=open(merged_excel_path, "rb"), file_name="merged_excel.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
     except Exception as e:
         st.error(f"❌ 오류 발생: {e}")
     finally:
         shutil.rmtree(temp_dir)  # 임시 폴더 삭제
+
+
+        st.download_button(label="📥 병합된 엑셀 다운로드", data=open(merged_excel_path, "rb"), file_name="merged_excel.xlsx", mime="application/vnd.o
 
