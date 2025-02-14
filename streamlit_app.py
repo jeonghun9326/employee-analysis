@@ -4,6 +4,8 @@ import streamlit as st
 from openpyxl import load_workbook
 from datetime import datetime, timedelta
 import tempfile
+import shutil
+import time
 
 # 📌 현재 날짜 기준 전월 및 당월 계산
 today = datetime.today()
@@ -185,7 +187,18 @@ if uploaded_files:
                 final_resigned = pd.concat(all_resigned)
                 final_resigned.to_excel(writer, sheet_name="퇴사자_리스트", index=False)
 
-        st.download_button(label="📥 병합된 엑셀 다운로드", data=open(merged_excel_path, "rb").read(), file_name="merged_excel.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        # 📌 다운로드 버튼 (파일 다운로드 후 10초 후 자동 삭제)
+        if st.download_button(
+            label="📥 병합된 엑셀 다운로드",
+            data=open(merged_excel_path, "rb").read(),
+            file_name="merged_excel.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ):
+            # 일정 시간 후 삭제
+            time.sleep(10)
+            os.remove(merged_excel_path)
+            shutil.rmtree(temp_dir)  # 임시 폴더 전체 삭제
+            st.warning("🔒 다운로드 후 10초가 지나 파일이 자동 삭제되었습니다.")
 
     except Exception as e:
         st.error(f"❌ 오류 발생: {e}")
