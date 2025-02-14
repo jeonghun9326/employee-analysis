@@ -108,21 +108,21 @@ if uploaded_files:
                 for col in date_columns:
                     df[col] = pd.to_datetime(df[col], errors="coerce").dt.strftime("%Y-%m")
 
-                # 📌 퇴사자 데이터 저장
-                if "퇴사일" in df.columns and "부서명" in df.columns and "성명" in df.columns and "직급명" in df.columns:
-                    resigned_details = df[df["퇴사일"] == previous_month][["부서명", "성명", "직급명"]]
-                    if not resigned_details.empty:
-                        st.write(f"📌 전월({previous_month}) 퇴사자 상세 내역:")
-                        st.dataframe(resigned_details)
-                        resigned_details.to_excel(writer, sheet_name=f"{sheet_name}_퇴사자", index=False)
-
                 # 📌 입사자 데이터 저장
-                if "입사일" in df.columns and "부서명" in df.columns and "성명" in df.columns and "직급명" in df.columns:
-                    new_hires_details = df[df["입사일"] == previous_month][["부서명", "성명", "직급명"]]
+                if "입사일" in df.columns and "사원구분명" in df.columns and "부서명" in df.columns and "성명" in df.columns and "직급명" in df.columns:
+                    new_hires_details = df[df["입사일"] == previous_month][["사원구분명", "부서명", "성명", "직급명"]]
                     if not new_hires_details.empty:
                         st.write(f"📌 전월({previous_month}) 입사자 상세 내역:")
                         st.dataframe(new_hires_details)
                         new_hires_details.to_excel(writer, sheet_name=f"{sheet_name}_입사자", index=False)
+                
+                # 📌 퇴사자 데이터 저장
+                if "퇴사일" in df.columns and "사원구분명" in df.columns and "부서명" in df.columns and "성명" in df.columns and "직급명" in df.columns:
+                    resigned_details = df[df["퇴사일"] == previous_month][["사원구분명", "부서명", "성명", "직급명"]]
+                    if not resigned_details.empty:
+                        st.write(f"📌 전월({previous_month}) 퇴사자 상세 내역:")
+                        st.dataframe(resigned_details)
+                        resigned_details.to_excel(writer, sheet_name=f"{sheet_name}_퇴사자", index=False)
 
         # 📌 병합된 엑셀 다운로드 제공
         st.download_button(label="📥 병합된 엑셀 다운로드", data=open(merged_excel_path, "rb").read(), file_name="merged_excel.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
