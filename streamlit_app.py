@@ -35,27 +35,30 @@ sheet_order = [
 ]
 
 # 📌 Streamlit UI
-st.title("📊 인원 분석 자동화 시스템 (ZIP 파일 업로드 지원)")
-st.write("ZIP 파일을 업로드하면 자동으로 엑셀 병합 및 인원 분석을 수행합니다.")
+st.title("📊 인원 분석 자동화 시스템 (ZIP/다중 엑셀 지원)")
+st.write("ZIP 파일 또는 여러 개의 엑셀 파일을 업로드하면 자동으로 병합 및 분석이 진행됩니다.")
 
-# 📌 ZIP 파일 업로드
-uploaded_zip = st.file_uploader("📂 ZIP 파일을 업로드하세요", type=["zip"])
+# 📌 파일 업로드 (ZIP 또는 여러 엑셀 파일 지원)
+uploaded_files = st.file_uploader("📂 ZIP 파일 또는 다수의 엑셀 파일을 업로드하세요", type=["zip", "xlsx"], accept_multiple_files=True)
 
-if uploaded_zip:
+if uploaded_files:
     try:
         # 📌 임시 폴더 생성
         temp_dir = tempfile.mkdtemp()
-        zip_path = os.path.join(temp_dir, "uploaded.zip")
 
-        # 📌 ZIP 파일 저장
-        with open(zip_path, "wb") as f:
-            f.write(uploaded_zip.read())
+        # 📌 업로드된 파일 처리
+        for uploaded_file in uploaded_files:
+            file_path = os.path.join(temp_dir, uploaded_file.name)
 
-        # 📌 ZIP 압축 해제
-        with zipfile.ZipFile(zip_path, "r") as zip_ref:
-            zip_ref.extractall(temp_dir)
+            with open(file_path, "wb") as f:
+                f.write(uploaded_file.read())
 
-        # 📌 병합된 파일 경로 설정
+            # 📌 ZIP 파일인 경우 압축 해제
+            if uploaded_file.name.endswith(".zip"):
+                with zipfile.ZipFile(file_path, "r") as zip_ref:
+                    zip_ref.extractall(temp_dir)
+
+        # 📌 병합된 엑셀 파일 경로
         merged_excel_path = os.path.join(temp_dir, "merged_excel.xlsx")
 
         # 📌 엑셀 병합 함수 실행
@@ -68,7 +71,7 @@ if uploaded_zip:
                     file_path = os.path.join(folder_path, file)
                     try:
                         wb = load_workbook(file_path, data_only=True)
-                        sheet_names = wb.sheetnames  # 모든 시트 포함 (숨겨진 시트 포함)
+                        sheet_names = wb.sheetnames  # 모든 시트 포함
 
                         if not sheet_names:
                             st.warning(f"⚠️ 파일 `{file}` 에 사용 가능한 시트가 없어 건너뜁니다.")
@@ -84,7 +87,7 @@ if uploaded_zip:
 
                             header_row_index = None
                             for idx, row in enumerate(data):
-                                if row[0] == "NO":
+                                if row[0] == "No":
                                     header_row_index = idx
                                     break
 
@@ -109,55 +112,41 @@ if uploaded_zip:
         for sheet_name, df in sheets.items():
             st.subheader(f"📄 시트 이름: {sheet_name}")
 
-            # "Starting Date" → "입사일"로 변경
+            # 📌 컬럼명 공백 제거 및 변환 작업
+            df.columns = df.columns.str.strip()
             if "Starting Date" in df.columns:
                 df.rename(columns={"Starting Date": "입사일"}, inplace=True)
 
-            # 컬럼명 공백 제거
-            df.columns = df.columns.str.strip()
-
-            # 미국식 날짜 변환
+            # 📌 날짜 변환
             if "입사일" in df.columns:
                 df["입사일"] = pd.to_datetime(df["입사일"], errors="coerce").dt.strftime("%Y-%m-%d")
 
-            # "퇴사일" 컬럼 생성
+            # 📌 "퇴사일" 컬럼이 없으면 자동 생성
             if "퇴사일" not in df.columns:
                 df["퇴사일"] = None
 
-            # "Remark" 컬럼 값에 따라 "퇴사일" 설정
             if "Remark" in df.columns:
                 df.loc[df["Remark"].astype(str).str.startswith("Resigned and last working"), "퇴사일"] = previous_month_last_day
 
-            # "사원구분명" 컬럼 생성
+            # 📌 "사원구분명" 컬럼 생성
             if "사원구분명" not in df.columns:
                 df["사원구분명"] = None
 
-            # "Contract Type" 기준으로 "사원구분명" 설정
             if "Contract Type" in df.columns:
-                df.loc[df["Contract Type"].astype(str).str.contains("FDC", na=False), "사원구분명"] = "비정규직"
+                df.loc[df["Contract Type"].astype(str).str.contains("FDC", na=False), "사원구분명"] = "계약직"
                 df.loc[df["Contract Type"].astype(str).str.contains("UDC", na=False), "사원구분명"] = "정규직"
 
-            # 날짜 변환
-            for col in date_columns:
-                df[col] = pd.to_datetime(df[col], errors="coerce").dt.strftime("%Y-%m")
-
-            # 결과 출력
+            # 📌 결과 출력
             st.write(f"📌 전월({previous_month}) 입사자 수: {df[df['입사일'] == previous_month].shape[0]}")
             st.write(f"📌 전월({previous_month}) 퇴사자 수: {df[df['퇴사일'] == previous_month].shape[0]}")
 
-        st.download_button(label="📥 병합된 엑셀 다운로드", data=open(merged_excel_path, "rb"), file_name="merged_excel.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        # 📌 병합된 엑셀 다운로드 제공
+        with open(merged_excel_path, "rb") as f:
+            st.download_button(label="📥 병합된 엑셀 다운로드", data=f.read(), file_name="merged_excel.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
     except Exception as e:
         st.error(f"❌ 오류 발생: {e}")
     finally:
         shutil.rmtree(temp_dir)  # 임시 폴더 삭제
-
-
-        st.download_button(
-    label="📥 병합된 엑셀 다운로드",
-    data=open(merged_excel_path, "rb").read(),  # 파일을 바이너리 모드로 읽음
-    file_name="merged_excel.xlsx",
-    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-)
 
 
