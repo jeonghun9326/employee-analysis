@@ -61,7 +61,7 @@ if uploaded_files:
                 for file in files:
                     try:
                         wb = load_workbook(file, data_only=True)
-                        sheet_names = wb.sheetnames  # 모든 시트 포함
+                        sheet_names = wb.sheetnames  
 
                         if not sheet_names:
                             st.warning(f"⚠️ 파일 `{os.path.basename(file)}` 에 사용 가능한 시트가 없어 건너뜁니다.")
@@ -102,47 +102,54 @@ if uploaded_files:
         for sheet_name, df in sheets.items():
             st.subheader(f"📄 시트 이름: {sheet_name}")
 
-            # "Starting Date" → "입사일"로 변경
+            # 📌 컬럼명 정리
             if "Starting Date" in df.columns:
                 df.rename(columns={"Starting Date": "입사일"}, inplace=True)
-
-            # 컬럼명 공백 제거
             df.columns = df.columns.str.strip()
 
-            # 미국식 날짜 변환
+            # 📌 특정 인원 제외
+            if sheet_name == "도이치오토월드" and "성명" in df.columns:
+                df = df.loc[df["성명"] != "장준호"]
+            if sheet_name == "DT네트웍스" and "성명" in df.columns:
+                df = df.loc[df["성명"] != "권혁민"]
+            if sheet_name == "BAMC" and "English Name" in df.columns:
+                df = df.loc[df["English Name"] != "YOON JONG LYOL"]
+
+            # 📌 날짜 변환
             if "입사일" in df.columns:
                 df["입사일"] = pd.to_datetime(df["입사일"], errors="coerce").dt.strftime("%Y-%m-%d")
-
-            # "퇴사일" 컬럼 생성
             if "퇴사일" not in df.columns:
                 df["퇴사일"] = None
-
-            # "Remark" 컬럼 값에 따라 "퇴사일" 설정
             if "Remark" in df.columns:
                 df.loc[df["Remark"].astype(str).str.startswith("Resigned and last working"), "퇴사일"] = previous_month_last_day
 
-            # "사원구분명" 컬럼 생성
+            # 📌 "사원구분명" 컬럼 자동 생성
             if "사원구분명" not in df.columns:
                 df["사원구분명"] = None
-
-            # "Contract Type" 기준으로 "사원구분명" 설정
             if "Contract Type" in df.columns:
                 df.loc[df["Contract Type"].astype(str).str.contains("FDC", na=False), "사원구분명"] = "계약직"
                 df.loc[df["Contract Type"].astype(str).str.contains("UDC", na=False), "사원구분명"] = "정규직"
 
-            # 날짜 변환
+            # 📌 날짜 변환 (YYYY-MM)
             for col in date_columns:
                 df[col] = pd.to_datetime(df[col], errors="coerce").dt.strftime("%Y-%m")
 
-            # 결과 출력
-            st.write(f"📌 전월({previous_month}) 입사자 수: {df[df['입사일'] == previous_month].shape[0]}")
-            st.write(f"📌 전월({previous_month}) 퇴사자 수: {df[df['퇴사일'] == previous_month].shape[0]}")
+            # 📌 분석 결과 출력
+            new_hires_prev_month = df[df["입사일"] == previous_month].shape[0]
+            resigned_prev_month = df[df["퇴사일"] == previous_month].shape[0]
+            active_or_resigned_this_month = df[df["퇴사일"].isna() | (df["퇴사일"] == current_month)].shape[0]
+            new_hires_by_type = df[df["입사일"] == previous_month]["사원구분명"].value_counts()
+            active_or_resigned_this_month_by_type = df[df["퇴사일"].isna() | (df["퇴사일"] == current_month)]["사원구분명"].value_counts()
+            resigned_by_type_prev_month = df[df["퇴사일"] == previous_month]["사원구분명"].value_counts()
 
-        # 📌 병합된 엑셀 다운로드 제공
+            st.write(f"📌 전월({previous_month}) 입사자 수: {new_hires_prev_month}")
+            st.write(f"📌 전월({previous_month}) 퇴사자 수: {resigned_prev_month}")
+            for emp_type in employee_types:
+                st.write(f"  - {emp_type}: {new_hires_by_type.get(emp_type, 0)}명")
+
         st.download_button(label="📥 병합된 엑셀 다운로드", data=open(merged_excel_path, "rb").read(), file_name="merged_excel.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
     except Exception as e:
         st.error(f"❌ 오류 발생: {e}")
-
 
 
