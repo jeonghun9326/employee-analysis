@@ -30,6 +30,10 @@ if uploaded_file:
             if sheet_name == "도이치오토월드" and "성명" in df.columns:
                 df = df.loc[df["성명"] != "장준호"]
 
+            # 📌 "도이치오토월드" 시트에서는 "권혁민" 제외
+            if sheet_name == "DT네트웍스" and "성명" in df.columns:
+                df = df.loc[df["성명"] != "권혁민"]
+
             # 📌 컬럼명 공백 제거
             df.columns = df.columns.str.strip()
 
