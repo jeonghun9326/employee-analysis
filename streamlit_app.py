@@ -15,6 +15,25 @@ previous_month_last_day = (today.replace(day=1) - timedelta(days=1)).strftime("%
 date_columns = ["입사일", "퇴사일"]
 employee_types = ["정규직", "계약직", "파견직", "임원"]  # 가나다순 정렬
 
+# 📌 시트 정렬 순서
+sheet_order = [
+    "도이치아우토",
+    "브리티시오토",
+    "바이에른오토",
+    "이탈리아오토모빌리",
+    "브리타니아오토",
+    "디티네트웍스",
+    "DT네트웍스"
+    "도이치파이낸셜",
+    "BAMC",
+    "차란차",
+    "디티이노베이션",
+    "DT이노베이션",
+    "도이치오토월드",
+    "DAFS",
+    "사직오토랜드"
+]
+
 # 📌 Streamlit UI
 st.title("📊 다중 엑셀 병합 및 인원 분석")
 st.write("엑셀 파일을 업로드하면 자동으로 병합 후 분석을 수행합니다.")
@@ -38,6 +57,8 @@ if uploaded_files:
 
         # 📌 엑셀 병합 함수 실행
         def merge_excel_files(files, output_file):
+            files.sort(key=lambda x: sheet_order.index(os.path.splitext(os.path.basename(x))[0]) if os.path.splitext(os.path.basename(x))[0] in sheet_order else len(sheet_order))
+
             with pd.ExcelWriter(output_file, engine="openpyxl") as writer:
                 for file in files:
                     try:
@@ -77,18 +98,28 @@ if uploaded_files:
         merge_excel_files(file_paths, merged_excel_path)
         st.success("✅ 엑셀 파일 병합 완료!")
 
-        # 📌 병합된 엑셀 파일 분석 및 추가 시트 생성
+        # 📌 병합된 엑셀 파일 분석 시작
         with pd.ExcelWriter(merged_excel_path, engine="openpyxl", mode="a") as writer:
             sheets = pd.read_excel(merged_excel_path, sheet_name=None, engine="openpyxl")
-
+    
             for sheet_name, df in sheets.items():
                 st.subheader(f"📄 시트 이름: {sheet_name}")
-
+    
                 # 📌 컬럼명 정리
                 if "Starting Date" in df.columns:
                     df.rename(columns={"Starting Date": "입사일"}, inplace=True)
                 df.columns = df.columns.str.strip()
-
+    
+                # 📌 특정 인원 제외
+                if sheet_name == "도이치오토월드" and "성명" in df.columns:
+                    df = df.loc[df["성명"] != "장준호"]
+                if sheet_name == "DT네트웍스" and "성명" in df.columns:
+                    df = df.loc[df["성명"] != "권혁민"]
+                if sheet_name == "디티네트웍스" and "성명" in df.columns:
+                    df = df.loc[df["성명"] != "권혁민"]                
+                if sheet_name == "BAMC" and "English Name" in df.columns:
+                    df = df.loc[df["English Name"] != "YOON JONG LYOL"]
+    
                 # 📌 날짜 변환
                 if "입사일" in df.columns:
                     df["입사일"] = pd.to_datetime(df["입사일"], errors="coerce").dt.strftime("%Y-%m-%d")
@@ -96,37 +127,54 @@ if uploaded_files:
                     df["퇴사일"] = None
                 if "Remark" in df.columns:
                     df.loc[df["Remark"].astype(str).str.startswith("Resigned and last working"), "퇴사일"] = previous_month_last_day
-
+    
                 # 📌 "사원구분명" 컬럼 자동 생성
                 if "사원구분명" not in df.columns:
                     df["사원구분명"] = None
                 if "Contract Type" in df.columns:
                     df.loc[df["Contract Type"].astype(str).str.contains("FDC", na=False), "사원구분명"] = "계약직"
                     df.loc[df["Contract Type"].astype(str).str.contains("UDC", na=False), "사원구분명"] = "정규직"
-
+    
                 # 📌 날짜 변환 (YYYY-MM)
                 for col in date_columns:
                     df[col] = pd.to_datetime(df[col], errors="coerce").dt.strftime("%Y-%m")
-
-                # 📌 입사자 데이터 저장
+    
+                # 📌 분석 결과 출력
+                new_hires_prev_month = df[df["입사일"] == previous_month].shape[0]
+                resigned_prev_month = df[df["퇴사일"] == previous_month].shape[0]
+                active_or_resigned_this_month = df[df["퇴사일"].isna() | (df["퇴사일"] == current_month)].shape[0]
+                new_hires_by_type = df[df["입사일"] == previous_month]["사원구분명"].value_counts()
+                active_or_resigned_this_month_by_type = df[df["퇴사일"].isna() | (df["퇴사일"] == current_month)]["사원구분명"].value_counts()
+                resigned_by_type_prev_month = df[df["퇴사일"] == previous_month]["사원구분명"].value_counts()
+    
+                # 📌 결과 출력
+                st.write("📌 1. **전월 입사자 수:**")
+                for emp_type in employee_types:
+                    st.write(f"  - {emp_type}: {new_hires_by_type.get(emp_type, 0)}명")
+    
+                st.write("📌 2. **전월 퇴사자 수:**")
+                for emp_type in employee_types:
+                    st.write(f"  - {emp_type}: {resigned_by_type_prev_month.get(emp_type, 0)}명")
+    
+                st.write("📌 3. **인원 수:**")
+                for emp_type in employee_types:
+                    st.write(f"  - {emp_type}: {active_or_resigned_this_month_by_type.get(emp_type, 0)}명")
+    
+                # 📌 전월 입사자 상세 출력
                 if "입사일" in df.columns and "사원구분명" in df.columns and "부서명" in df.columns and "성명" in df.columns and "직급명" in df.columns:
                     new_hires_details = df[df["입사일"] == previous_month][["사원구분명", "부서명", "성명", "직급명"]]
                     if not new_hires_details.empty:
                         st.write(f"📌 전월({previous_month}) 입사자 상세 내역:")
                         st.dataframe(new_hires_details)
-                        new_hires_details.to_excel(writer, sheet_name=f"{sheet_name}_입사자", index=False)
-                
-                # 📌 퇴사자 데이터 저장
+    
+                # 📌 전월 퇴사자 상세 출력
                 if "퇴사일" in df.columns and "사원구분명" in df.columns and "부서명" in df.columns and "성명" in df.columns and "직급명" in df.columns:
                     resigned_details = df[df["퇴사일"] == previous_month][["사원구분명", "부서명", "성명", "직급명"]]
                     if not resigned_details.empty:
                         st.write(f"📌 전월({previous_month}) 퇴사자 상세 내역:")
                         st.dataframe(resigned_details)
-                        resigned_details.to_excel(writer, sheet_name=f"{sheet_name}_퇴사자", index=False)
 
-        # 📌 병합된 엑셀 다운로드 제공
         st.download_button(label="📥 병합된 엑셀 다운로드", data=open(merged_excel_path, "rb").read(), file_name="merged_excel.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
     except Exception as e:
         st.error(f"❌ 오류 발생: {e}")
-
