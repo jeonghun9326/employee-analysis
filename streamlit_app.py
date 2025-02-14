@@ -160,14 +160,14 @@ if uploaded_files:
                 st.write(f"  - {emp_type}: {active_or_resigned_this_month_by_type.get(emp_type, 0)}명")
 
             # 📌 전월 퇴사자 상세 출력
-            if "퇴사일" in df.columns and "부서명" in df.columns and "성명" in df.columns and "직급명" in df.columns:
+            if "퇴사일" in df.columns and "사원구분명" in df.columns and "부서명" in df.columns and "성명" in df.columns and "직급명" in df.columns:
                 resigned_details = df[df["퇴사일"] == previous_month][["부서명", "성명", "직급명"]]
                 if not resigned_details.empty:
                     st.write(f"📌 전월({previous_month}) 퇴사자 상세 내역:")
                     st.dataframe(resigned_details)
 
             # 📌 전월 입사자 상세 출력
-            if "입사일" in df.columns and "부서명" in df.columns and "성명" in df.columns and "직급명" in df.columns:
+            if "입사일" in df.columns and "사원구분명" in df.columns and "부서명" in df.columns and "성명" in df.columns and "직급명" in df.columns:
                 new_hires_details = df[df["입사일"] == previous_month][["부서명", "성명", "직급명"]]
                 if not new_hires_details.empty:
                     st.write(f"📌 전월({previous_month}) 입사자 상세 내역:")
