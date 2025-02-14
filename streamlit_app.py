@@ -153,5 +153,11 @@ if uploaded_zip:
         shutil.rmtree(temp_dir)  # 임시 폴더 삭제
 
 
-        st.download_button(label="📥 병합된 엑셀 다운로드", data=open(merged_excel_path, "rb"), file_name="merged_excel.xlsx", mime="application/vnd.o
+        st.download_button(
+    label="📥 병합된 엑셀 다운로드",
+    data=open(merged_excel_path, "rb").read(),  # 파일을 바이너리 모드로 읽음
+    file_name="merged_excel.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
+
 
