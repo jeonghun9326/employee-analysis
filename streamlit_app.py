@@ -101,7 +101,11 @@ if uploaded_files:
         # 📌 병합된 엑셀 파일 분석 시작
         with pd.ExcelWriter(merged_excel_path, engine="openpyxl", mode="a") as writer:
             sheets = pd.read_excel(merged_excel_path, sheet_name=None, engine="openpyxl")
-    
+
+            # 📌 입사자 및 퇴사자 데이터를 담을 리스트 생성
+            all_new_hires = []
+            all_resigned = []
+            
             for sheet_name, df in sheets.items():
                 st.subheader(f"📄 시트 이름: {sheet_name}")
     
@@ -160,19 +164,26 @@ if uploaded_files:
                 for emp_type in employee_types:
                     st.write(f"  - {emp_type}: {active_or_resigned_this_month_by_type.get(emp_type, 0)}명")
     
-                # 📌 전월 입사자 상세 출력
-                if "입사일" in df.columns and "사원구분명" in df.columns and "부서명" in df.columns and "성명" in df.columns and "직급명" in df.columns:
-                    new_hires_details = df[df["입사일"] == previous_month][["사원구분명", "부서명", "성명", "직급명"]]
-                    if not new_hires_details.empty:
-                        st.write(f"📌 전월({previous_month}) 입사자 상세 내역:")
-                        st.dataframe(new_hires_details)
-    
-                # 📌 전월 퇴사자 상세 출력
-                if "퇴사일" in df.columns and "사원구분명" in df.columns and "부서명" in df.columns and "성명" in df.columns and "직급명" in df.columns:
-                    resigned_details = df[df["퇴사일"] == previous_month][["사원구분명", "부서명", "성명", "직급명"]]
-                    if not resigned_details.empty:
-                        st.write(f"📌 전월({previous_month}) 퇴사자 상세 내역:")
-                        st.dataframe(resigned_details)
+                # 📌 입사자 및 퇴사자 정보 저장
+                if {"입사일", "사원구분명", "부서명", "성명", "직급명"}.issubset(df.columns):
+                    new_hires = df[df["입사일"] == previous_month][["부서명", "성명", "직급명"]]
+                    if not new_hires.empty:
+                        new_hires["시트명"] = sheet_name
+                        all_new_hires.append(new_hires)
+
+                if {"퇴사일", "사원구분명", "부서명", "성명", "직급명"}.issubset(df.columns):
+                    resigned = df[df["퇴사일"] == previous_month][["사원구분명", "부서명", "성명", "직급명"]]
+                    if not resigned.empty:
+                        resigned["시트명"] = sheet_name
+                        all_resigned.append(resigned)
+
+            # 📌 입사자 및 퇴사자 데이터를 엑셀 시트에 저장 (시트 순서 유지)
+            if all_new_hires:
+                final_new_hires = pd.concat(all_new_hires)
+                final_new_hires.to_excel(writer, sheet_name="입사자_리스트", index=False)
+            if all_resigned:
+                final_resigned = pd.concat(all_resigned)
+                final_resigned.to_excel(writer, sheet_name="퇴사자_리스트", index=False)
 
         st.download_button(label="📥 병합된 엑셀 다운로드", data=open(merged_excel_path, "rb").read(), file_name="merged_excel.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
