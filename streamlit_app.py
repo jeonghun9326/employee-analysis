@@ -166,7 +166,7 @@ if uploaded_files:
     
                 # 📌 입사자 및 퇴사자 정보 저장
                 if {"입사일", "사원구분명", "부서명", "성명", "직급명"}.issubset(df.columns):
-                    new_hires = df[df["입사일"] == previous_month][["부서명", "성명", "직급명"]]
+                    new_hires = df[df["입사일"] == previous_month][["사원구분명", "부서명", "성명", "직급명"]]
                     if not new_hires.empty:
                         new_hires["시트명"] = sheet_name
                         all_new_hires.append(new_hires)
