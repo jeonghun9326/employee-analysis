@@ -40,6 +40,18 @@ sheet_order = [
 st.title("📊 다중 엑셀 병합 및 인원 분석")
 st.write("엑셀 파일을 업로드하면 자동으로 병합 후 분석을 수행합니다.")
 
+# 📌 🎯 **사용자가 기준 월을 선택할 수 있도록 설정**
+st.sidebar.subheader("📅 기준 월 설정")
+selected_year = st.sidebar.selectbox("📌 기준 연도 선택", list(range(2022, datetime.today().year + 1)), index=2)
+selected_month = st.sidebar.selectbox("📌 기준 월 선택", list(range(1, 13)), index=datetime.today().month - 2)
+
+# **사용자가 선택한 기준 월을 YYYY-MM 형식으로 변환**
+selected_date = datetime(selected_year, selected_month, 1)
+selected_month_str = selected_date.strftime("%Y-%m")  # 기준 월 (예: 2023-11)
+selected_month_last_day = (selected_date.replace(day=1) + timedelta(days=32)).replace(day=1) - timedelta(days=1)  # 기준 월의 마지막 날
+
+st.sidebar.write(f"📌 선택된 기준 월: **{selected_month_str}**")
+
 # 📌 🎯 **마스킹할 컬럼 & 삭제할 컬럼 입력 받기**
 st.sidebar.subheader("🔒 개인정보 보호 설정")
 
@@ -175,7 +187,12 @@ if uploaded_files:
                 new_hires_by_type = df[df["입사일"] == previous_month]["사원구분명"].value_counts()
                 active_or_resigned_this_month_by_type = df[df["퇴사일"].isna() | (df["퇴사일"] == current_month)]["사원구분명"].value_counts()
                 resigned_by_type_prev_month = df[df["퇴사일"] == previous_month]["사원구분명"].value_counts()
-    
+                new_hires_selected_month = df[df["입사일"] == selected_month_str].shape[0]
+                resigned_selected_month = df[df["퇴사일"] == selected_month_str].shape[0]
+
+                st.write(f"📌 **선택한 기준 월 ({selected_month_str}) 입사자 수:** {new_hires_selected_month}명")
+                st.write(f"📌 **선택한 기준 월 ({selected_month_str}) 퇴사자 수:** {resigned_selected_month}명")
+                
                 # 📌 결과 출력
                 st.write("📌 1. **전월 입사자 수:**")
                 for emp_type in employee_types:
