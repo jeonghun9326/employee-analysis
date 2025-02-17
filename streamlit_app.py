@@ -44,11 +44,11 @@ st.write("엑셀 파일을 업로드하면 자동으로 병합 후 분석을 수
 st.sidebar.subheader("🔒 개인정보 보호 설정")
 
 # ✅ 마스킹할 컬럼 설정 (사용자가 직접 입력 가능)
-mask_columns_input = st.sidebar.text_area("전화번호")
+mask_columns_input = st.sidebar.text_area("🔹 마스킹할 컬럼 입력 (쉼표로 구분)","전화번호, 경력")
 mask_columns = [col.strip() for col in mask_columns_input.split(",") if col.strip()]
 
 # ✅ 삭제할 컬럼 설정 (사용자가 직접 입력 가능)
-delete_columns_input = st.sidebar.text_area("주민번호, 연봉, 주소, 이메일")
+delete_columns_input = st.sidebar.text_area("🗑 삭제할 컬럼 입력 (쉼표로 구분)", "주민번호, 연봉, 주소, 이메일")
 delete_columns = [col.strip() for col in delete_columns_input.split(",") if col.strip()]
 
 # 📌 다중 엑셀 파일 업로드
