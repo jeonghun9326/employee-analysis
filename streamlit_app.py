@@ -43,14 +43,6 @@ st.write("엑셀 파일을 업로드하면 자동으로 병합 후 분석을 수
 # 📌 🎯 **마스킹할 컬럼 & 삭제할 컬럼 입력 받기**
 st.sidebar.subheader("🔒 개인정보 보호 설정")
 
-# ✅ 마스킹할 컬럼 설정 (사용자가 직접 입력 가능)
-mask_columns_input = st.sidebar.text_area("🔹 마스킹할 컬럼 입력 (쉼표로 구분)", "전화번호")
-mask_columns = [col.strip() for col in mask_columns_input.split(",") if col.strip()]
-
-# ✅ 삭제할 컬럼 설정 (사용자가 직접 입력 가능)
-delete_columns_input = st.sidebar.text_area("🗑 삭제할 컬럼 입력 (쉼표로 구분)", "주민번호, 연봉, 주소, 이메일")
-delete_columns = [col.strip() for col in delete_columns_input.split(",") if col.strip()]
-
 # ✅ **키워드 기반 삭제 기능 추가**
 delete_keywords_input = st.sidebar.text_area("🔍 키워드로 삭제할 컬럼 입력 (쉼표로 구분)", "주민, 경력, 인정")
 delete_keywords = [kw.strip() for kw in delete_keywords_input.split(",") if kw.strip()]
@@ -106,24 +98,15 @@ if uploaded_files:
                             else:
                                 df = pd.DataFrame(data[1:], columns=data[0])
 
-                            # 🎯 ✅ **개인정보 컬럼 마스킹 & 삭제 처리**
+                            # 🎯 ✅ **키워드 기반 삭제 처리**
                             df.columns = df.columns.str.strip()  # 컬럼명 공백 제거
 
-                            # ✅ 마스킹 처리
-                            for col in mask_columns:
-                                if col in df.columns:
-                                    df[col] = df[col].astype(str).str[:2] + "***"  # 앞 2자리만 남기고 마스킹
-
-                            # ✅ 삭제 처리 (삭제 전후 컬럼 로그 추가)
-                            before_cols = df.columns.tolist()
-
-                            # 🎯 **키워드 기반 삭제 추가**
+                            # ✅ **키워드가 포함된 모든 컬럼 삭제**
                             delete_cols_by_keyword = [col for col in df.columns if any(keyword in col for keyword in delete_keywords)]
                             
-                            # 최종 삭제할 컬럼 (사용자가 입력한 컬럼 + 키워드 기반 컬럼)
-                            final_delete_columns = list(set(delete_columns + delete_cols_by_keyword))
-
-                            df.drop(columns=[col for col in final_delete_columns if col in df.columns], errors="ignore", inplace=True)
+                            # 컬럼 삭제 (키워드 포함 컬럼만 삭제)
+                            before_cols = df.columns.tolist()
+                            df.drop(columns=[col for col in delete_cols_by_keyword if col in df.columns], errors="ignore", inplace=True)
                             after_cols = df.columns.tolist()
                             
                             # 디버깅용 출력 (삭제된 컬럼 확인)
