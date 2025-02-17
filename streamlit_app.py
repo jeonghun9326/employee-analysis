@@ -2,10 +2,33 @@ import os
 import pandas as pd
 import streamlit as st
 from openpyxl import load_workbook
+from openpyxl.styles import NamedStyle
+from openpyxl.utils import get_column_letter
 from datetime import datetime, timedelta
 import tempfile
 import shutil
 import time
+
+def apply_excel_date_format(file_path, date_columns):
+    """ 엑셀 파일의 날짜 컬럼을 'YYYY-MM-DD' 형식으로 변경하는 함수 """
+    wb = load_workbook(file_path)  # 엑셀 파일 로드
+    for sheet in wb.sheetnames:  # 모든 시트에 대해 적용
+        ws = wb[sheet]
+        
+        # 날짜 서식 스타일 생성 (YYYY-MM-DD)
+        date_style = NamedStyle(name="datetime", number_format="YYYY-MM-DD")
+        if "datetime" not in wb.named_styles:
+            wb.add_named_style(date_style)
+
+        # 날짜 컬럼 찾아서 스타일 적용
+        for col_idx, col in enumerate(ws.iter_cols(), start=1):
+            col_letter = get_column_letter(col_idx)
+            if ws[col_letter + "1"].value in date_columns:  # 첫 번째 행이 컬럼명
+                for cell in col[1:]:  # 첫 번째 행 제외하고 적용
+                    if isinstance(cell.value, datetime):
+                        cell.style = date_style
+    
+    wb.save(file_path)  # 적용된 파일 저장
 
 # 📌 현재 날짜 기준 전월 및 당월 계산
 today = datetime.today()
@@ -244,6 +267,9 @@ if uploaded_files:
                 final_resigned = pd.concat(all_resigned)
                 final_resigned.to_excel(writer, sheet_name="퇴사자_리스트", index=False)
 
+        # 📌 날짜 형식 적용 후 다운로드 버튼 추가
+        apply_excel_date_format(merged_excel_path, date_columns)  # 날짜 형식 적용
+        
         # 📌 다운로드 버튼 (파일 다운로드 후 10초 후 자동 삭제)
         if st.download_button(
             label="📥 병합된 엑셀 다운로드",
