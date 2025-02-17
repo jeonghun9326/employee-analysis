@@ -40,6 +40,17 @@ sheet_order = [
 st.title("📊 다중 엑셀 병합 및 인원 분석")
 st.write("엑셀 파일을 업로드하면 자동으로 병합 후 분석을 수행합니다.")
 
+# 📌 🎯 **마스킹할 컬럼 & 삭제할 컬럼 입력 받기**
+st.sidebar.subheader("🔒 개인정보 보호 설정")
+
+# ✅ 마스킹할 컬럼 설정 (사용자가 직접 입력 가능)
+mask_columns_input = st.sidebar.text_area("전화번호")
+mask_columns = [col.strip() for col in mask_columns_input.split(",") if col.strip()]
+
+# ✅ 삭제할 컬럼 설정 (사용자가 직접 입력 가능)
+delete_columns_input = st.sidebar.text_area("주민번호, 연봉, 주소, 이메일")
+delete_columns = [col.strip() for col in delete_columns_input.split(",") if col.strip()]
+
 # 📌 다중 엑셀 파일 업로드
 uploaded_files = st.file_uploader("📂 엑셀 파일을 선택하세요", type=["xlsx"], accept_multiple_files=True)
 
