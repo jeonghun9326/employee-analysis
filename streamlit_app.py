@@ -181,7 +181,7 @@ if uploaded_files:
                     df[col] = pd.to_datetime(df[col], errors="coerce").dt.strftime("%Y-%m")
     
                 # 📌 원하는 정렬 순서 지정
-                employee_type_order = ["정규직", "계약직", "파견직"]
+                employee_type_order = ["임원", "정규직", "계약직", "파견직"]
     
                # 📌 1. 선택한 월 입사자 수
                 new_hires_selected_month = df[df["입사일"] == selected_month_str].shape[0]
