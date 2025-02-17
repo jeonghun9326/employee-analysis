@@ -181,8 +181,6 @@ if uploaded_files:
                     df[col] = pd.to_datetime(df[col], errors="coerce").dt.strftime("%Y-%m")
     
                 # 📌 분석 결과 출력
-                new_hires_prev_month = df[df["입사일"] == previous_month].shape[0]
-                resigned_prev_month = df[df["퇴사일"] == previous_month].shape[0]
                 active_or_resigned_this_month = df[df["퇴사일"].isna() | (df["퇴사일"] == current_month)].shape[0]
                 new_hires_by_type = df[df["입사일"] == previous_month]["사원구분명"].value_counts()
                 active_or_resigned_this_month_by_type = df[df["퇴사일"].isna() | (df["퇴사일"] == current_month)]["사원구분명"].value_counts()
