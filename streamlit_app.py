@@ -180,7 +180,10 @@ if uploaded_files:
                 for col in date_columns:
                     df[col] = pd.to_datetime(df[col], errors="coerce").dt.strftime("%Y-%m")
     
-                # 📌 1. 선택한 월 입사자 수
+                # 📌 원하는 정렬 순서 지정
+                employee_type_order = ["정규직", "계약직", "파견직"]
+    
+               # 📌 1. 선택한 월 입사자 수
                 new_hires_selected_month = df[df["입사일"] == selected_month_str].shape[0]
                 st.write(f"📌 1. **{selected_month_str} 입사자 수:** {new_hires_selected_month}명")
 
@@ -197,25 +200,27 @@ if uploaded_files:
 
                 # 📌 4. 선택한 월 입사자 수 (사원구분별)
                 new_hires_by_type_selected_month = df[df["입사일"] == selected_month_str]["사원구분명"].value_counts()
+                new_hires_by_type_selected_month = new_hires_by_type_selected_month.reindex(employee_type_order, fill_value=0)  # 정렬
                 st.write(f"📌 4. **{selected_month_str} 입사자 수 (사원구분별)**")
-                for emp_type in new_hires_by_type_selected_month.index:
-                    st.write(f"  - {emp_type}: {new_hires_by_type_selected_month.get(emp_type, 0)}명")
+                for emp_type, count in new_hires_by_type_selected_month.items():
+                    st.write(f"  - {emp_type}: {count}명")
 
                 # 📌 5. 선택한 월 퇴사자 수 (사원구분별)
                 resigned_by_type_selected_month = df[df["퇴사일"] == selected_month_str]["사원구분명"].value_counts()
+                resigned_by_type_selected_month = resigned_by_type_selected_month.reindex(employee_type_order, fill_value=0)  # 정렬
                 st.write(f"📌 5. **{selected_month_str} 퇴사자 수 (사원구분별)**")
-                for emp_type in resigned_by_type_selected_month.index:
-                    st.write(f"  - {emp_type}: {resigned_by_type_selected_month.get(emp_type, 0)}명")
+                for emp_type, count in resigned_by_type_selected_month.items():
+                    st.write(f"  - {emp_type}: {count}명")
 
                 # 📌 6. 선택한 월 기준 재직자 수 (사원구분별)
                 active_this_month_by_type = df[
                     (df["입사일"] <= selected_month_str) & 
                     (df["퇴사일"].isna() | (df["퇴사일"] > selected_month_str))
                 ]["사원구분명"].value_counts()
-                
+                active_this_month_by_type = active_this_month_by_type.reindex(employee_type_order, fill_value=0)  # 정렬
                 st.write(f"📌 6. **{selected_month_str} 기준 총 재직자 수 (사원구분별)**")
-                for emp_type in active_this_month_by_type.index:
-                    st.write(f"  - {emp_type}: {active_this_month_by_type.get(emp_type, 0)}명")
+                for emp_type, count in active_this_month_by_type.items():
+                    st.write(f"  - {emp_type}: {count}명")
 
 
                 # 📌 입사자 및 퇴사자 정보 저장
