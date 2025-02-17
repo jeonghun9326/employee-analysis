@@ -237,6 +237,19 @@ if uploaded_files:
                         st.write(f"📌 {selected_month_str} 퇴사자 상세 내역:")
                         st.dataframe(resigned)
 
+                # 📌 입사자 및 퇴사자 정보 저장
+                if {"입사일", "사원구분명", "부서명", "성명", "직급명"}.issubset(df.columns):
+                    new_hires = df[df["입사일"] == previous_month][["사원구분명", "부서명", "성명", "직급명"]]
+                    if not new_hires.empty:
+                        new_hires["시트명"] = sheet_name
+                        all_new_hires.append(new_hires)
+
+                if {"퇴사일", "사원구분명", "부서명", "성명", "직급명"}.issubset(df.columns):
+                    resigned = df[df["퇴사일"] == previous_month][["사원구분명", "부서명", "성명", "직급명"]]
+                    if not resigned.empty:
+                        resigned["시트명"] = sheet_name
+                        all_resigned.append(resigned)
+
             # 📌 입사자 및 퇴사자 데이터를 엑셀 시트에 저장 (시트 순서 유지)
             if all_new_hires:
                 final_new_hires = pd.concat(all_new_hires)
