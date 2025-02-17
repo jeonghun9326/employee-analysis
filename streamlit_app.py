@@ -102,6 +102,24 @@ if uploaded_files:
                             else:
                                 df = pd.DataFrame(data[1:], columns=data[0])
 
+                            # ✅ 마스킹 처리
+                            for col in mask_columns:
+                                if col in df.columns:
+                                    df[col] = df[col].astype(str).str[:2] + "***"  # 앞 2자리만 남기고 마스킹
+
+                            # ✅ 삭제 처리 (삭제 전후 컬럼 로그 추가)
+                            before_cols = df.columns.tolist()
+                            df.drop(columns=[col for col in delete_columns if col in df.columns], errors="ignore", inplace=True)
+                            after_cols = df.columns.tolist()
+                            
+                            # 디버깅용 출력 (삭제된 컬럼 확인)
+                            removed_cols = list(set(before_cols) - set(after_cols))
+                            if removed_cols:
+                                st.sidebar.write(f"🗑 삭제된 컬럼: {', '.join(removed_cols)}")
+
+                            sheet_name_trimmed = os.path.splitext(os.path.basename(file))[0][:31]
+                            df.to_excel(writer, sheet_name=sheet_name_trimmed, index=False)
+
                             sheet_name_trimmed = os.path.splitext(os.path.basename(file))[0][:31]
                             df.to_excel(writer, sheet_name=sheet_name_trimmed, index=False)
 
