@@ -180,17 +180,6 @@ if uploaded_files:
                 for col in date_columns:
                     df[col] = pd.to_datetime(df[col], errors="coerce").dt.strftime("%Y-%m")
     
-                # 📌 분석 결과 출력
-                active_or_resigned_this_month = df[df["퇴사일"].isna() | (df["퇴사일"] == current_month)].shape[0]
-                new_hires_by_type = df[df["입사일"] == previous_month]["사원구분명"].value_counts()
-                active_or_resigned_this_month_by_type = df[df["퇴사일"].isna() | (df["퇴사일"] == current_month)]["사원구분명"].value_counts()
-                resigned_by_type_prev_month = df[df["퇴사일"] == previous_month]["사원구분명"].value_counts()
-                new_hires_selected_month = df[df["입사일"] == selected_month_str].shape[0]
-                resigned_selected_month = df[df["퇴사일"] == selected_month_str].shape[0]
-
-                # 📌 결과 출력 (사용자가 선택한 기준 월을 기반으로 수정)
-                st.write(f"📌 **선택한 기준 월 ({selected_month_str}) 분석 결과:**")
-
                 # 📌 1. 선택한 월 입사자 수
                 new_hires_selected_month = df[df["입사일"] == selected_month_str].shape[0]
                 st.write(f"📌 1. **{selected_month_str} 입사자 수:** {new_hires_selected_month}명")
@@ -199,41 +188,35 @@ if uploaded_files:
                 resigned_selected_month = df[df["퇴사일"] == selected_month_str].shape[0]
                 st.write(f"📌 2. **{selected_month_str} 퇴사자 수:** {resigned_selected_month}명")
 
-                # 📌 3. 선택한 월 기준 재직자 수
-                active_or_resigned_this_month = df[df["퇴사일"].isna() | (df["퇴사일"] == selected_month_str)].shape[0]
-                st.write(f"📌 3. **{selected_month_str} 총 재직자 수:** {active_or_resigned_this_month}명")
+                # 📌 3. 선택한 월 기준 총 재직자 수
+                active_this_month = df[
+                    (df["입사일"] <= selected_month_str) & 
+                    (df["퇴사일"].isna() | (df["퇴사일"] > selected_month_str))
+                ].shape[0]
+                st.write(f"📌 3. **{selected_month_str} 기준 총 재직자 수:** {active_this_month}명")
 
                 # 📌 4. 선택한 월 입사자 수 (사원구분별)
                 new_hires_by_type_selected_month = df[df["입사일"] == selected_month_str]["사원구분명"].value_counts()
                 st.write(f"📌 4. **{selected_month_str} 입사자 수 (사원구분별)**")
-                for emp_type in employee_types:
+                for emp_type in new_hires_by_type_selected_month.index:
                     st.write(f"  - {emp_type}: {new_hires_by_type_selected_month.get(emp_type, 0)}명")
 
                 # 📌 5. 선택한 월 퇴사자 수 (사원구분별)
                 resigned_by_type_selected_month = df[df["퇴사일"] == selected_month_str]["사원구분명"].value_counts()
                 st.write(f"📌 5. **{selected_month_str} 퇴사자 수 (사원구분별)**")
-                for emp_type in employee_types:
+                for emp_type in resigned_by_type_selected_month.index:
                     st.write(f"  - {emp_type}: {resigned_by_type_selected_month.get(emp_type, 0)}명")
 
                 # 📌 6. 선택한 월 기준 재직자 수 (사원구분별)
-                active_or_resigned_this_month_by_type = df[df["퇴사일"].isna() | (df["퇴사일"] == selected_month_str)]["사원구분명"].value_counts()
-                st.write(f"📌 6. **{selected_month_str} 총 재직자 수 (사원구분별)**")
-                for emp_type in employee_types:
-                    st.write(f"  - {emp_type}: {active_or_resigned_this_month_by_type.get(emp_type, 0)}명")
+                active_this_month_by_type = df[
+                    (df["입사일"] <= selected_month_str) & 
+                    (df["퇴사일"].isna() | (df["퇴사일"] > selected_month_str))
+                ]["사원구분명"].value_counts()
+                
+                st.write(f"📌 6. **{selected_month_str} 기준 총 재직자 수 (사원구분별)**")
+                for emp_type in active_this_month_by_type.index:
+                    st.write(f"  - {emp_type}: {active_this_month_by_type.get(emp_type, 0)}명")
 
-                # 📌 7. 선택한 월 입사자 상세 출력
-                if {"입사일", "사원구분명", "부서명", "성명", "직급명"}.issubset(df.columns):
-                    new_hires = df[df["입사일"] == selected_month_str][["사원구분명", "부서명", "성명", "직급명"]]
-                    if not new_hires.empty:
-                        st.write(f"📌 {selected_month_str} 입사자 상세 내역:")
-                        st.dataframe(new_hires)
-
-                # 📌 8. 선택한 월 퇴사자 상세 출력
-                if {"퇴사일", "사원구분명", "부서명", "성명", "직급명"}.issubset(df.columns):
-                    resigned = df[df["퇴사일"] == selected_month_str][["사원구분명", "부서명", "성명", "직급명"]]
-                    if not resigned.empty:
-                        st.write(f"📌 {selected_month_str} 퇴사자 상세 내역:")
-                        st.dataframe(resigned)
 
                 # 📌 입사자 및 퇴사자 정보 저장
                 if {"입사일", "사원구분명", "부서명", "성명", "직급명"}.issubset(df.columns):
