@@ -102,6 +102,9 @@ if uploaded_files:
                             else:
                                 df = pd.DataFrame(data[1:], columns=data[0])
 
+                            # 🎯 ✅ **개인정보 컬럼 마스킹 & 삭제 처리**
+                            df.columns = df.columns.str.strip()  # 컬럼명 공백 제거
+
                             # ✅ 마스킹 처리
                             for col in mask_columns:
                                 if col in df.columns:
@@ -109,16 +112,20 @@ if uploaded_files:
 
                             # ✅ 삭제 처리 (삭제 전후 컬럼 로그 추가)
                             before_cols = df.columns.tolist()
-                            df.drop(columns=[col for col in delete_columns if col in df.columns], errors="ignore", inplace=True)
+
+                            # 🎯 **키워드 기반 삭제 추가**
+                            delete_cols_by_keyword = [col for col in df.columns if any(keyword in col for keyword in delete_keywords)]
+                            
+                            # 최종 삭제할 컬럼 (사용자가 입력한 컬럼 + 키워드 기반 컬럼)
+                            final_delete_columns = list(set(delete_columns + delete_cols_by_keyword))
+
+                            df.drop(columns=[col for col in final_delete_columns if col in df.columns], errors="ignore", inplace=True)
                             after_cols = df.columns.tolist()
                             
                             # 디버깅용 출력 (삭제된 컬럼 확인)
                             removed_cols = list(set(before_cols) - set(after_cols))
                             if removed_cols:
                                 st.sidebar.write(f"🗑 삭제된 컬럼: {', '.join(removed_cols)}")
-
-                            sheet_name_trimmed = os.path.splitext(os.path.basename(file))[0][:31]
-                            df.to_excel(writer, sheet_name=sheet_name_trimmed, index=False)
 
                             sheet_name_trimmed = os.path.splitext(os.path.basename(file))[0][:31]
                             df.to_excel(writer, sheet_name=sheet_name_trimmed, index=False)
