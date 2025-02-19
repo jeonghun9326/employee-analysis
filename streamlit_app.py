@@ -14,7 +14,7 @@ def select_feature():
 
 # ✅ 기능 실행
 def main():
-    st.title("📊 다중 엑셀 분석 시스템")
+    st.title("📊 엑셀 분석 시스템")
 
     feature_option = select_feature()
 
