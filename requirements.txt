@@ -1,7 +1,5 @@
 streamlit
 pandas
 openpyxl
-streamlit_app_HR
-streamlit_app_insurance
 run_excel_analysis
 run_insurance_analysis
