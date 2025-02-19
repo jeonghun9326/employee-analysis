@@ -287,7 +287,7 @@ def process_employee_data(df, sheet_name, selected_month_str, previous_month, pr
 
 
 
-def analyze_employee_data(merged_excel_path, selected_month_str, previous_month, previous_month_last_day, date_columns):
+def analyze_employee_data(merged_excel_path, selected_month_str, previous_month, previous_month_last_day, date_columns, sheet_order):
     with pd.ExcelWriter(merged_excel_path, engine="openpyxl", mode="a") as writer:
         sheets = pd.read_excel(merged_excel_path, sheet_name=None, engine="openpyxl")
 
@@ -340,7 +340,7 @@ def process_excel_files(uploaded_files, selected_month_str, previous_month, prev
     merge_excel_files(file_paths, merged_excel_path, sheet_order, delete_keywords)
     
     # 📌 3. 병합된 데이터에서 입사자 및 퇴사자 분석
-    analyze_employee_data(merged_excel_path, selected_month_str, previous_month, previous_month_last_day, date_columns)
+    analyze_employee_data(merged_excel_path, selected_month_str, previous_month, previous_month_last_day, date_columns, sheet_order)
     
     # 📌 4. 날짜 형식 적용
     apply_date_format_to_excel(merged_excel_path, date_columns)
