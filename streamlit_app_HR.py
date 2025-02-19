@@ -52,27 +52,31 @@ def get_analysis_settings():
 # 분석 대상 컬럼 및 사원 구분 정보 가져오기
 date_columns, employee_types = get_analysis_settings()
 
+# ✅ 기본 시트 정렬 순서
+DEFAULT_SHEET_ORDER = [
+    "도이치아우토", "브리티시오토", "바이에른오토", "이탈리아오토모빌리",
+    "브리타니아오토", "디티네트웍스", "DT네트웍스", "도이치파이낸셜",
+    "BAMC", "차란차", "디티이노베이션", "DT이노베이션",
+    "도이치오토월드", "DAFS", "사직오토랜드"
+]
+
 def get_sheet_order():
-    """ 엑셀 병합 시 사용할 시트 정렬 순서를 반환하는 함수 """
-    return [
-        "도이치아우토",
-        "브리티시오토",
-        "바이에른오토",
-        "이탈리아오토모빌리",
-        "브리타니아오토",
-        "디티네트웍스",
-        "DT네트웍스",
-        "도이치파이낸셜",
-        "BAMC",
-        "차란차",
-        "디티이노베이션",
-        "DT이노베이션",
-        "도이치오토월드",
-        "DAFS",
-        "사직오토랜드"
-    ]
-# 시트 정렬 순서 가져오기
-sheet_order = get_sheet_order()
+    """ 기본 시트 정렬 순서를 반환하는 함수 (사용자 지정 가능) """
+    st.sidebar.subheader("📑 시트 정렬 순서 설정")
+
+    # ✅ 사용자 입력 받기 (쉼표로 구분된 값)
+    user_input = st.sidebar.text_area(
+        "원하는 순서대로 시트명을 입력하세요 (쉼표로 구분)",
+        ", ".join(DEFAULT_SHEET_ORDER)  # 기본값 제공
+    )
+
+    # ✅ 입력값을 리스트로 변환
+    custom_order = [s.strip() for s in user_input.split(",") if s.strip()]
+
+    # ✅ 기본 순서에서 입력된 순서 유지
+    sorted_sheets = sorted(DEFAULT_SHEET_ORDER, key=lambda x: custom_order.index(x) if x in custom_order else len(custom_order))
+
+    return sorted_sheets
 
 def select_month():
     """ Streamlit UI에서 기준 연도 및 월을 선택하는 함수 """
@@ -349,6 +353,9 @@ def run_excel_analysis():
     """ Streamlit UI에서 사용자의 입력을 받고 엑셀 병합 및 분석을 실행하는 함수 """
     st.subheader(" 엑셀 병합 및 인원 분석")
 
+    # 시트 정렬 순서 가져오기
+    sheet_order = get_sheet_order()
+    
     # ✅ 기준 월 선택
     selected_month_str, selected_month_last_day = select_month()
 
