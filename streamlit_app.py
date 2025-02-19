@@ -1,3 +1,5 @@
+import sys
+import requests
 import streamlit as st
 from streamlit_app_HR import run_excel_analysis
 from streamlit_app_insurance import run_insurance_analysis
