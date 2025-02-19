@@ -218,6 +218,12 @@ def process_employee_data(df, sheet_name, selected_month_str, previous_month, pr
     # 📌 원하는 정렬 순서 지정
     employee_type_order = ["임원", "정규직", "계약직", "파견직"]
 
+    # ✅ **사원구분명 정렬을 위한 순서 컬럼 추가**
+    df["사원구분_정렬"] = df["사원구분명"].map(lambda x: employee_type_order.index(x) if x in employee_type_order else len(employee_type_order))
+
+    # ✅ **사원구분명 순서로 정렬**
+    df = df.sort_values(by=["사원구분_정렬"], ascending=True).drop(columns=["사원구분_정렬"])
+
     # 📌 1. 선택한 월 입사자 수
     new_hires_selected_month = df[df["입사일"] == selected_month_str].shape[0]
     st.write(f"📌 1. **{selected_month_str} 입사자 수:** {new_hires_selected_month}명")
