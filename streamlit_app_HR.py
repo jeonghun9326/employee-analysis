@@ -99,11 +99,20 @@ def get_delete_keywords():
     st.sidebar.subheader("🔒 개인정보 보호 설정")
 
     # 사용자가 쉼표로 구분하여 키워드를 입력하면 리스트로 변환
-    delete_keywords_input = st.sidebar.text_area("🔍 키워드로 삭제할 컬럼 입력 (쉼표로 구분)", "주민, 경력, 인정")
+    delete_keywords_input = st.sidebar.text_area("🔍 키워드로 삭제할 컬럼 입력 (쉼표로 구분)", "주민, 경력, 인정, 연봉")
     delete_keywords = [kw.strip() for kw in delete_keywords_input.split(",") if kw.strip()]
     
     return delete_keywords
 
+def get_include_columns():
+    """ Streamlit UI에서 추출할 컬럼을 입력받는 함수 """
+    st.sidebar.subheader("🔒 추출할 컬럼 설정")
+
+    # 사용자가 쉼표로 구분하여 추출할 컬럼을 입력하면 리스트로 변환
+    include_columns_input = st.sidebar.text_area("🔍 추출할 컬럼 입력 (쉼표로 구분)", "성명, 입사일, 퇴사일")
+    include_columns = [col.strip() for col in include_columns_input.split(",") if col.strip()]
+    
+    return include_columns
 
 def upload_excel_files():
     """ Streamlit UI에서 다중 엑셀 파일을 업로드하는 함수 """
@@ -126,7 +135,7 @@ def save_uploaded_files(uploaded_files):
     return temp_dir, merged_excel_path, file_paths
 
 # 📌 엑셀 병합 함수 실행
-def merge_excel_files(files, output_file, sheet_order, delete_keywords):
+def merge_excel_files(files, output_file, sheet_order, delete_keywords, include_columns):
     """ 여러 개의 엑셀 파일을 병합하고, 특정 키워드가 포함된 컬럼을 삭제하는 함수 """
     
     # 시트 정렬 순서에 따라 정렬
@@ -288,6 +297,8 @@ def process_employee_data(df, sheet_name, selected_month_str, previous_month, pr
 
 
 def analyze_employee_data(merged_excel_path, selected_month_str, previous_month, previous_month_last_day, date_columns, sheet_order):
+    """ 병합된 엑셀에서 입사자 및 퇴사자 분석 후 새로운 시트 추가 """
+    
     with pd.ExcelWriter(merged_excel_path, engine="openpyxl", mode="a") as writer:
         sheets = pd.read_excel(merged_excel_path, sheet_name=None, engine="openpyxl")
 
@@ -330,14 +341,14 @@ def apply_date_format_to_excel(file_path, date_columns):
     """ 병합된 엑셀 파일의 날짜 컬럼을 YYYY-MM-DD 형식으로 변환하는 함수 """
     apply_excel_date_format(file_path, date_columns)
 
-def process_excel_files(uploaded_files, selected_month_str, previous_month, previous_month_last_day, date_columns, sheet_order, delete_keywords):
+def process_excel_files(uploaded_files, selected_month_str, previous_month, previous_month_last_day, date_columns, sheet_order, delete_keywords, include_columns):
     """ 엑셀 파일을 병합, 분석, 서식 적용 후 다운로드할 수 있도록 처리하는 함수 """
     
     # 📌 1. 업로드된 파일을 저장
     temp_dir, merged_excel_path, file_paths = save_uploaded_files(uploaded_files)
     
     # 📌 2. 엑셀 병합 및 키워드 기반 컬럼 삭제
-    merge_excel_files(file_paths, merged_excel_path, sheet_order, delete_keywords)
+    merge_excel_files(file_paths, merged_excel_path, sheet_order, delete_keywords, include_columns)
     
     # 📌 3. 병합된 데이터에서 입사자 및 퇴사자 분석
     analyze_employee_data(merged_excel_path, selected_month_str, previous_month, previous_month_last_day, date_columns, sheet_order)
@@ -355,21 +366,25 @@ def run_excel_analysis():
 
     # 시트 정렬 순서 가져오기
     sheet_order = get_sheet_order()
-    
+
     # ✅ 기준 월 선택
     selected_month_str, selected_month_last_day = select_month()
 
     # ✅ 개인정보 보호 설정 (삭제할 키워드 입력)# 삭제할 키워드 리스트 가져오기
     delete_keywords = get_delete_keywords()
 
+    # ✅ 개인정보 보호 설정 (추출할 키워드 입력)# 추출할 키워드 리스트 가져오기
+    include_columns = get_include_columns()
+
     # ✅ 다중 엑셀 파일 업로드 # 엑셀 파일 업로드 함수 호출
     uploaded_files = upload_excel_files()
 
     if uploaded_files:
         # ✅ # 전체 엑셀 처리 함수 호출 (한 번에 실행)
-        process_excel_files(uploaded_files, selected_month_str, previous_month, previous_month_last_day, date_columns, sheet_order, delete_keywords)
+        process_excel_files(uploaded_files, selected_month_str, previous_month, previous_month_last_day, date_columns, sheet_order, delete_keywords, include_columns)
 
 if __name__ == "__main__":
     # Streamlit UI 실행 함수 호출
     run_excel_analysis()
+
 
